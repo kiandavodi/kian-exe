@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>KIAN.EXE — Summer Leaderboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --board:#0B3D2E;        /* masters board green */
+    --board-deep:#072A20;
+    --line:#1C5744;
+    --yellow:#FFD23F;       /* leaderboard yellow */
+    --white:#F7F5EE;
+    --red:#E4573D;          /* under par red */
+    --dim:#8FB3A5;
+    --disp:"Oswald", "Arial Narrow", sans-serif;
+    --mono:"IBM Plex Mono", "Courier New", monospace;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html{ -webkit-text-size-adjust:100%; }
+  body{
+    margin:0; background:var(--board-deep); color:var(--white);
+    font-family:var(--mono); font-size:15px; line-height:1.5;
+  }
+  .app{ max-width:560px; margin:0 auto; padding:0 14px 90px; }
+
+  /* ---------- header board ---------- */
+  .board{
+    background:var(--board);
+    border:2px solid var(--line);
+    border-radius:10px;
+    margin:14px 0 16px;
+    padding:18px 18px 14px;
+  }
+  .board h1{
+    font-family:var(--disp); font-weight:700; font-size:34px;
+    letter-spacing:0.04em; text-transform:uppercase; line-height:1;
+    margin:0 0 2px; color:var(--yellow);
+  }
+  .board .tag{ font-size:11.5px; color:var(--dim); margin:0 0 14px; }
+  .stats{ display:flex; gap:8px; }
+  .stat{
+    flex:1; background:var(--board-deep); border:1px solid var(--line);
+    border-radius:8px; padding:10px 8px 8px; text-align:center;
+  }
+  .stat .n{ font-family:var(--disp); font-size:26px; font-weight:700; color:var(--white); line-height:1; }
+  .stat .n.hot{ color:var(--red); }
+  .stat .n.gold{ color:var(--yellow); }
+  .stat .l{ font-size:9px; letter-spacing:0.12em; text-transform:uppercase; color:var(--dim); margin-top:4px; }
+  .xpwrap{ margin-top:12px; }
+  .xpbar{ height:10px; background:var(--board-deep); border:1px solid var(--line); border-radius:99px; overflow:hidden; }
+  .xpfill{ height:100%; width:0%; background:var(--yellow); border-radius:99px; transition:width .4s ease; }
+  .xplbl{ font-size:10px; color:var(--dim); margin-top:5px; display:flex; justify-content:space-between; }
+
+  /* ---------- the deal ---------- */
+  .deal{
+    background:var(--board); border:2px solid var(--line); border-radius:10px;
+    padding:16px 18px; margin-bottom:16px; font-size:13.5px;
+  }
+  .deal b{ color:var(--yellow); }
+  .deal p{ margin:0 0 10px; }
+  .deal p:last-child{ margin:0; }
+
+  /* ---------- section heads ---------- */
+  h2{
+    font-family:var(--disp); font-weight:600; font-size:21px;
+    text-transform:uppercase; letter-spacing:0.05em;
+    margin:26px 4px 10px; color:var(--white);
+    display:flex; align-items:center; gap:10px;
+  }
+  h2 .hole{
+    font-size:12px; color:var(--board-deep); background:var(--yellow);
+    border-radius:5px; padding:2px 8px; font-family:var(--mono); font-weight:700;
+  }
+  .subtag{ font-size:11.5px; color:var(--dim); margin:-6px 4px 12px; }
+
+  /* ---------- mission cards ---------- */
+  .card{
+    background:var(--board); border:2px solid var(--line); border-radius:10px;
+    margin-bottom:10px; overflow:hidden;
+  }
+  .card.done{ border-color:var(--yellow); }
+  .card-top{
+    display:flex; align-items:center; gap:12px;
+    padding:13px 14px; cursor:pointer; user-select:none;
+  }
+  .tick{
+    flex:0 0 auto; width:26px; height:26px; border:2px solid var(--dim);
+    border-radius:7px; display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:15px; color:var(--board);
+  }
+  .card.done .tick{ background:var(--yellow); border-color:var(--yellow); }
+  .card-title{ flex:1; }
+  .card-title .t{ font-family:var(--disp); font-size:16.5px; font-weight:600; letter-spacing:0.02em; line-height:1.2; }
+  .card.done .card-title .t{ color:var(--dim); text-decoration:line-through; text-decoration-color:var(--yellow); }
+  .card-title .m{ font-size:10.5px; color:var(--dim); margin-top:2px; }
+  .xp-badge{
+    flex:0 0 auto; font-size:10px; font-weight:700; color:var(--yellow);
+    border:1px solid var(--line); border-radius:5px; padding:3px 7px;
+  }
+  .card-body{ padding:0 14px 14px 52px; font-size:13px; color:var(--white); display:none; }
+  .card.open .card-body{ display:block; }
+  .card-body p{ margin:0 0 10px; }
+  .steps{ list-style:none; margin:0 0 6px; padding:0; }
+  .steps li{ margin-bottom:9px; padding-left:20px; position:relative; }
+  .steps li::before{ content:"▸"; position:absolute; left:0; color:var(--yellow); }
+
+  a.go{
+    display:inline-block; background:var(--yellow); color:var(--board-deep);
+    font-family:var(--disp); font-weight:700; font-size:14px;
+    text-transform:uppercase; letter-spacing:0.05em; text-decoration:none;
+    padding:9px 16px; border-radius:8px; margin:2px 8px 6px 0;
+  }
+  a.go.ghost{ background:transparent; color:var(--yellow); border:2px solid var(--yellow); }
+  a.go:active{ transform:scale(0.97); }
+
+  .boss{
+    border-color:var(--red);
+  }
+  .boss .xp-badge{ color:var(--red); border-color:var(--red); }
+  .boss .card-title .t{ color:var(--red); }
+  .boss.done{ border-color:var(--yellow); }
+  .boss.done .card-title .t{ color:var(--dim); }
+
+  .rule{
+    background:var(--board-deep); border:1px dashed var(--line); border-radius:8px;
+    padding:10px 12px; font-size:12px; color:var(--dim); margin:8px 0 2px;
+  }
+  .rule b{ color:var(--yellow); }
+
+  /* ---------- footer bar ---------- */
+  .bar{
+    position:fixed; left:0; right:0; bottom:0;
+    background:var(--board); border-top:2px solid var(--line);
+    padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+  }
+  .bar-in{ max-width:560px; margin:0 auto; display:flex; align-items:center; gap:12px; font-size:11px; color:var(--dim); }
+  .bar-in b{ color:var(--yellow); font-size:13px; }
+  .bar-in .spacer{ flex:1; }
+  .savemsg{ font-size:10px; color:var(--dim); }
+
+  .foot{ text-align:center; font-size:10px; color:var(--dim); margin-top:30px; letter-spacing:0.08em; text-transform:uppercase; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ============ BOARD ============ -->
+  <div class="board">
+    <h1>Kian.exe</h1>
+    <p class="tag">SUMMER LEADERBOARD · 16 JUL – 17 AUG · FIELD OF 1</p>
+    <div class="stats">
+      <div class="stat"><div class="n hot" id="streak">0</div><div class="l">Day streak</div></div>
+      <div class="stat"><div class="n gold" id="xp">0</div><div class="l">XP</div></div>
+      <div class="stat"><div class="n" id="ships">0</div><div class="l">Ships</div></div>
+      <div class="stat"><div class="n" id="gates">0/4</div><div class="l">Bosses</div></div>
+    </div>
+    <div class="xpwrap">
+      <div class="xpbar"><div class="xpfill" id="xpfill"></div></div>
+      <div class="xplbl"><span id="xplo">LEVEL 1 · ROOKIE</span><span id="xphi"></span></div>
+    </div>
+  </div>
+
+  <!-- ============ THE DEAL ============ -->
+  <div class="deal">
+    <p><b>You said you learn from videos. Good news: this whole course is videos.</b> Harvard films it like a show — live demos, props, a professor who's genuinely funny. You objected your way into exactly the format you wanted.</p>
+    <p><b>One rule, and it's the only one that matters:</b> a video gives 0 XP until code follows it. Watching feels like learning. It isn't. Watch → build → tick. That's the loop.</p>
+    <p>Tap a mission to open it. Tap the box to complete it. Your streak is the score — <b>2 hours a day keeps it alive. A zero day kills it.</b> Nobody checks this but you. That's the point.</p>
+  </div>
+
+  <!-- ============ SETUP ============ -->
+  <h2><span class="hole">HOLE 0</span> Tee Up</h2>
+  <p class="subtag">Tonight. 45 minutes total. Every button is a real link — tap it, do the thing, come back, tick it.</p>
+
+  <div class="card" data-id="s1" data-xp="20">
+    <div class="card-top"><div class="tick">✓</div><div class="card-title"><div class="t">Make your GitHub</div><div class="m">5 min · your public trophy shelf</div></div><div class="xp-badge">+20</div></div>
+    <div class="card-body">
+      <p>Every line of code you write this summer goes here, publicly. At 16, when you want something, people will search your name. This is what they'll find.</p>
+      <ul class="steps"><li>Real name or close to it. A handle you'd show someone at 22.</li></ul>
+      <a class="go" href="https://github.com/signup" target="_blank" rel="noopener">Create GitHub →</a>
+    </div>
+  </div>
+
+  <div class="card" data-id="s2" data-xp="20">
+    <div class="card-top"><div class="tick">✓</div><div class="card-title"><div class="t">Make your edX account</div><div class="m">5 min · this is how Harvard grades you</div></div><div class="xp-badge">+20</div></div>
+    <div class="card-body">
+      <p>Free account. It's how you submit work and get it marked by Harvard's robot grader — the one thing this summer that can't be charmed.</p>
+      <a class="go" href="https://www.edx.org/" target="_blank" rel="noopener">Create edX →</a>
+    </div>
+  </div>
+
+  <div class="card" data-id="s3" data-xp="30">
+    <div class="card-top"><div class="tick">✓</div><div class="card-title"><div class="t">Join Hack Club</div><div class="m">10 min · 100,000 teenagers building stuff</div></div><div class="xp-badge">+30</div></div>
+    <div class="card-body">
+      <p>Teens only, 13–18, free forever. This is the group chat where everyone's building something. When you're stuck at 11pm, someone in here is stuck on the same thing.</p>
+      <ul class="steps"><li>Join, then post one message: who you are, what you're building this summer. Before you feel ready. Everyone in there posted before they felt ready.</li></ul>
+      <a class="go" href="https://hackclub.com/" target="_blank" rel="noopener">Join Hack Club →</a>
+    </div>
+  </div>
+
+  <div class="card" data-id="s4" data-xp="30">
+    <div class="card-top"><div class="tick">✓</div><div class="card-title"><div class="t">Sign up for Stardance</div><div class="m">10 min · get paid in hardware for this summer</div></div><div class="xp-badge">+30</div></div>
+    <div class="card-body">
+      <p>Hack Club's summer thing. You log your building hours, you earn actual prizes — Raspberry Pis, 3D printers, even a laptop. The work you're doing anyway counts. It's free stuff for showing up.</p>
+      <ul class="steps"><li>Sign up, then follow their setup for <b>Hackatime</b> — it logs your coding hours automatically so you don't have to.</li></ul>
+      <a class="go" href="https://stardance.hackclub.com/" target="_blank" rel="noopener">Join Stardance →</a>
+    </div>
+  </div>
+
+  <div class="card" data-id="s5" data-xp="20">
+    <div class="card-top"><div class="tick">✓</div><div class="card-title"><div class="t">Open the course. Watch 20 minutes.</div><div class="m">tonight · just break the seal</div></div><div class="xp-badge">+20</div></div>
+    <div class="card-body">
+      <p>This link is the FREE version. (If a page ever asks you for $299 — wrong door, come back here.) Scroll to <b>Week 0</b>, press play, watch 20 minutes. That's the whole mission. 1.25× speed is allowed and encouraged.</p>
+      <a class="go" href="https://cs50.harvard.edu/python/" target="_blank" rel="noopener">Open CS50P →</a>
+      <a class="go ghost" href="https://www.youtube.com/@cs50" target="_blank" rel="noopener">CS50 on YouTube →</a>
+    </div>
+  </div>
+
+  <!-- ============ WEEK 1 ============ -->
+  <h2><span class="hole">HOLES 1–6</span> Front Nine</h2>
+  <p class="subtag">Mon 20 – Sat 25 July · Weeks 0–4 of the course. Each mission = watch the lecture (it's a video, your thing), then beat the problem set.</p>
+
+  <div class="card" data-id="w0" data-xp="40">
+    <div class="card-top"><div class="tick">✓</div><div class="card-title"><div class="t">Week 0 — Functions &amp; Variables</div><div class="m">watch → build → submit</div></div><div class="xp-badge">+40</div></div>
+    <div class="card-body">
+      <ul class="steps">
+        <li>Open the course → tap <b>Week 0</b> → watch the lecture</li>
+        <li>Do the problem set. Submit it. The grader (check50) tells you instantly if it's green.</li>
+      </ul>
+      <a class="go" href="https://cs50.harvard.edu/python/" target="_blank" rel="noopener">Open Week 0 →</a>
+      <div class="rule"><b>Stuck?</b> 20-minute rule: read the error out loud, explain it to your putter, print everything. THEN ask the Discord (link is on the course page under "communities").</div>
+    </div>
+  </div>
+
+  <div class="card" data-id="w1" data-xp="40">
+    <div class="card-top"><div class="tick">✓</div><div class="card-title"><div class="t">Week 1 — Conditionals</div><div class="m">if this, then that</div></div><div class="xp-badge">+40</div></div>
+    <div class="card-body">
+      <ul class="steps"><li>Course page → <b>Week 1</b> → lecture → problem set → green</li></ul>
+      <a class="go" href="https://cs50.harvard.edu/python/" target="_blank" rel="noopener">Open Week 1 →</a>
+      <div class="rule"><b>Already get it?</b> Skip the lecture. Go straight at the problem set. The grader doesn't care how you got there. But if it goes red — back to the video. No shame, that's the system working.</div>
+    </div>
+  </div>
+
+  <div class="card" data-id="w2" data-xp="50">
+    <div class="card-top"><div class="tick">✓</div><div class="card-title"><div class="t">Week 2 — Loops</div><div class="m">make the machine repeat itself</div></div><div class="xp-badge">+50</div></div>
+    <div class="card-body">
+      <ul class="steps"><li>Course page → <b>Week 2</b> → lecture → problem set → green</li></ul>
+      <a class="go" href="https://cs50.harvard.edu/python/" target="_blank" rel="noopener">Open Week 2 →</a>
+    </div>
+  </div>
+
+  <div class="card" data-id="w3" data-xp="50">
+    <div class="card-top"><div class="tick">✓</div><div class="card-title"><div class="t">Week 3 — Exceptions</div><div class="m">⚠ the week everyone feels stupid</div></div><div class="xp-badge">+50</div></div>
+    <div class="card-body">
+      <p><b>Heads up, written in advance:</b> this is the week it stops feeling easy, for everyone, every time. That feeling is not a verdict on you — it's the course working. Every person who can code felt it in exactly this week.</p>
+      <ul class="steps"><li>Course page → <b>Week 3</b> → lecture → problem set → green</li></ul>
+      <a class="go" href="https://cs50.harvard.edu/python/" target="_blank" rel="noopener">Open Week 3 →</a>
+    </div>
+  </div>
+
+  <div class="card" data-id="w4" data-xp="50">
+    <div class="card-top"><div class="tick">✓</div><div class="card-title"><div class="t">Week 4 — Libraries</div><div class="m">stand on other people's code</div></div><div class="xp-badge">+50</div></div>
+    <div class="card-body">
+      <ul class="steps"><li>Course page → <b>Week 4</b> → lecture → problem set → green</li></ul>
+      <a class="go" href="https://cs50.harvard.edu/python/" target="_blank" rel="noopener">Open Week 4 →</a>
+    </div>
+  </div>
+
+  <div class="card" data-id="ship1" data-xp="80">
+    <div class="card-top"><div class="tick">✓</div><div class="card-title"><div class="t">🚢 SHIP #1 — put something on the internet</div><div class="m">Friday · ugly is allowed, invisible is not</div></div><div class="xp-badge">+80</div></div>
+    <div class="card-body">
+      <p>Build anything with a loop in it. A thing that tracks your golf scores. A random shot-caller for the range. Doesn't matter. It goes on GitHub, public, with a 6-line README: what it does, how to run it, why you made it.</p>
+      <ul class="steps"><li>Then post it in Hack Club. One screenshot, one sentence.</li></ul>
+      <a class="go" href="https://github.com/new" target="_blank" rel="noopener">New repo →</a>
+      <a class="go ghost" href="https://hackclub.com/" target="_blank" rel="noopener">Post it →</a>
+    </div>
+  </div>
+
+  <div class="card boss" data-id="g1" data-xp="150" data-gate="1">
+    <div class="card-top"><div class="tick">✓</div><div class="card-title"><div class="t">👑 BOSS 1 — prove it out loud</div><div class="m">no notes, no screen, one human</div></div><div class="xp-badge">+150</div></div>
+    <div class="card-body">
+      <p>Find a human. Three minutes, no notes, no screen: explain what a loop is, and what happens when a program hits something it wasn't expecting.</p>
+      <p>This is the un-fakeable check. If you can say it out loud, you own it. If you can't — one of the weeks above got skipped, and better to find out now than in October.</p>
+    </div>
+  </div>
+
+  <!-- ============ WEEK 2 ============ -->
+  <h2><span class="hole">HOLES 7–12</span> The Swing Rebuild</h2>
+  <p class="subtag">Mon 27 Jul – Sat 1 Aug · Weeks 5–7. Every golfer who rebuilt a swing got worse first. This is that week. It was predicted. Keep swinging.</p>
+
+  <div class="card" data-id="w5" data-xp="60">
+    <div class="card-top"><div class="tick">✓</div><div class="card-title"><div class="t">Week 5 — Unit Tests</div><div class="m">code that checks your code</div></div><div class="xp-badge">+60</div></div>
+    <div class="card-body">
+      <ul class="steps"><li>Course page → <b>Week 5</b> → lecture → problem set → green</li></ul>
+      <a class="go" href="https://cs50.harvard.edu/python/" target="_blank" rel="noopener">Open Week 5 →</a>
+    </div>
+  </div>
+
+  <div class="card" data-id="w6" data-xp="60">
+    <div class="card-top"><div class="tick">✓</div><div class="card-title"><div class="t">Week 6 — File I/O</div><div class="m">your programs stop being toys</div></div><div class="xp-badge">+60</div></div>
+    <div class="card-body">
+      <p>A program that touches a real file is a program that can do work for someone. This is the week it gets real.</p>
+      <ul class="steps"><li>Course page → <b>Week 6</b> → lecture → problem set → green</li></ul>
+      <a class="go" href="https://cs50.harvard.edu/python/" target="_blank" rel="noopener">Open Week 6 →</a>
+    </div>
+  </div>
+
+  <div class="card" data-id="w7" data-xp="70">
+    <div class="card-top"><div class="tick">✓</div><div class="card-title"><div class="t">Week 7 — Regular Expressions</div><div class="m">⚠ genuinely horrible. everyone hates it.</div></div><div class="xp-badge">+70</div></div>
+    <div class="card-body">
+      <p><b>Read this now, in advance:</b> regex is miserable, the novelty of the summer is gone, and this is the exact week people quit. Which is why it's worth 70 XP and why it's written here before you felt it. It's not a sign. It's Thursday. Do the two hours.</p>
+      <ul class="steps"><li>Course page → <b>Week 7</b> → lecture → problem set → green</li></ul>
+      <a class="go" href="https://cs50.harvard.edu/python/" target="_blank" rel="noopener">Open Week 7 →</a>
+    </div>
+  </div>
+
+  <div class="card" data-id="ship2" data-xp="80">
+    <div class="card-top"><div class="tick">✓</div><div class="card-title"><div class="t">🚢 SHIP #2 — something that reads a file</div><div class="m">Friday</div></div><div class="xp-badge">+80</div></div>
+    <div class="card-body">
+      <p>A script that cleans a messy spreadsheet. A tool that reads a folder and tells you something true about it. GitHub. README. Post it.</p>
+      <a class="go" href="https://github.com/new" target="_blank" rel="noopener">New repo →</a>
+    </div>
+  </div>
+
+  <div class="card boss" data-id="g2" data-xp="150" data-gate="2">
+    <div class="card-top"><div class="tick">✓</div><div class="card-title"><div class="t">👑 BOSS 2 — break it on purpose</div><div class="m">the weirdest flex in programming</div></div><div class="xp-badge">+150</div></div>
+    <div class="card-body">
+      <p>Write a test that <b>fails on purpose</b>. Then fix the code so it passes. Then explain to a human why any sane person would deliberately write a failing test.</p>
+      <p>(When you can answer that, you've understood something most people coding for a year haven't.)</p>
+    </div>
+  </div>
+
+  <!-- ============ WEEK 3 ============ -->
+  <h2><span class="hole">HOLES 13–18</span> Card In</h2>
+  <p class="subtag">Mon 3 – Sat 8 Aug · Weeks 8–9 + final project + the certificate.</p>
+
+  <div class="card" data-id="w8" data-xp="80">
+    <div class="card-top"><div class="tick">✓</div><div class="card-title"><div class="t">Week 8 — Object-Oriented Programming</div><div class="m">the big one · take two days</div></div><div class="xp-badge">+80</div></div>
+    <div class="card-body">
+      <p>The biggest idea in the course. Give it two sessions and don't rush it — everything you build for the next ten years sits on this.</p>
+      <ul class="steps"><li>Course page → <b>Week 8</b> → lecture → problem set → green</li></ul>
+      <a class="go" href="https://cs50.harvard.edu/python/" target="_blank" rel="noopener">Open Week 8 →</a>
+    </div>
+  </div>
+
+  <div class="card" data-id="w9" data-xp="50">
+    <div class="card-top"><div class="tick">✓</div><div class="card-title"><div class="t">Week 9 — Et Cetera</div><div class="m">the last lecture</div></div><div class="xp-badge">+50</div></div>
+    <div class="card-body">
+      <ul class="steps"><li>Course page → <b>Week 9</b> → lecture → problem set → green</li></ul>
+      <a class="go" href="https://cs50.harvard.edu/python/" target="_blank" rel="noopener">Open Week 9 →</a>
+    </div>
+  </div>
+
+  <div class="card" data-id="fp" data-xp="120">
+    <div class="card-top"><div class="tick">✓</div><div class="card-title"><div class="t">Final Project</div><div class="m">your idea · your build</div></div><div class="xp-badge">+120</div></div>
+    <div class="card-body">
+      <p>The course page tells you the requirements. Pick something small enough to finish and yours enough to care about.</p>
+      <a class="go" href="https://cs50.harvard.edu/python/" target="_blank" rel="noopener">Project brief →</a>
+    </div>
+  </div>
+
+  <div class="card boss" data-id="g3" data-xp="200" data-gate="3">
+    <div class="card-top"><div class="tick">✓</div><div class="card-title"><div class="t">👑 BOSS 3 — claim the Harvard certificate</div><div class="m">free · real · yours</div></div><div class="xp-badge">+200</div></div>
+    <div class="card-body">
+      <p>All nine sets green + final project in = a free certificate from Harvard. Earned off a robot grader that has never heard of you and doesn't care who your dad is. Claim it at the link, then do the second half:</p>
+      <ul class="steps"><li>Open a file you wrote in week one. Read it. Say what it does AND what's wrong with it. If you can see the flaws in your own three-week-old code — you've levelled up for real.</li></ul>
+      <a class="go" href="https://cs50.harvard.edu/python/certificate" target="_blank" rel="noopener">Claim certificate →</a>
+      <div class="rule"><b>🔓 UNLOCK:</b> from 8 August the AI ban lifts. You've earned the tools because now you know what they're doing. Before this point they'd have made you hollow. After it, they make you fast.</div>
+    </div>
+  </div>
+
+  <!-- ============ WEEK 4 ============ -->
+  <h2><span class="hole">FINAL ROUND</span> Play For Real</h2>
+  <p class="subtag">Mon 10 – Sun 16 Aug · The certificate was the warm-up. This week is the point.</p>
+
+  <div class="card" data-id="b1" data-xp="40">
+    <div class="card-top"><div class="tick">✓</div><div class="card-title"><div class="t">Pick the idea — one sentence</div><div class="m">"It lets ___ do ___ without ___"</div></div><div class="xp-badge">+40</div></div>
+    <div class="card-body">
+      <p>Can't finish the sentence? Not an idea yet. Good hunting grounds: golf (a tool that shows where you're actually losing strokes, not just your score) or a real problem from the family businesses — real users tell you the truth.</p>
+    </div>
+  </div>
+
+  <div class="card" data-id="b2" data-xp="100">
+    <div class="card-top"><div class="tick">✓</div><div class="card-title"><div class="t">Build it small. Ship it.</div><div class="m">cut features until it's boring, then cut one more</div></div><div class="xp-badge">+100</div></div>
+    <div class="card-body">
+      <ul class="steps">
+        <li>Build it (AI tools now allowed — you can read what they write now)</li>
+        <li>README: what, how, why</li>
+        <li>Public on GitHub</li>
+      </ul>
+      <a class="go" href="https://github.com/new" target="_blank" rel="noopener">New repo →</a>
+    </div>
+  </div>
+
+  <div class="card" data-id="b3" data-xp="80">
+    <div class="card-top"><div class="tick">✓</div><div class="card-title"><div class="t">Get ONE real user</div><div class="m">the hardest mission on this board</div></div><div class="xp-badge">+80</div></div>
+    <div class="card-body">
+      <p>One human, not you, uses it and tells you what's wrong with it. That feedback is worth more than the certificate. "It works for me" doesn't count — everything works for you.</p>
+    </div>
+  </div>
+
+  <div class="card" data-id="b4" data-xp="60">
+    <div class="card-top"><div class="tick">✓</div><div class="card-title"><div class="t">Submit to Stardance + demo in Hack Club</div><div class="m">collect your hardware</div></div><div class="xp-badge">+60</div></div>
+    <div class="card-body">
+      <a class="go" href="https://stardance.hackclub.com/" target="_blank" rel="noopener">Submit →</a>
+      <a class="go ghost" href="https://hackclub.com/" target="_blank" rel="noopener">Demo →</a>
+    </div>
+  </div>
+
+  <div class="card boss" data-id="g4" data-xp="250" data-gate="4">
+    <div class="card-top"><div class="tick">✓</div><div class="card-title"><div class="t">👑 FINAL BOSS — it runs on someone else's machine</div><div class="m">the whole summer, one test</div></div><div class="xp-badge">+250</div></div>
+    <div class="card-body">
+      <p>Software that only runs on your laptop isn't software — it's a diary. When it runs on somebody else's machine, you're not a kid doing a course anymore. You're a person who builds things. Different species.</p>
+    </div>
+  </div>
+
+  <!-- ============ AFTER ============ -->
+  <h2><span class="hole">NEXT SZN</span> Locked Until September</h2>
+  <div class="deal">
+    <p><b>Sept–Dec:</b> <a class="go ghost" style="padding:5px 10px;font-size:12px;" href="https://cs50.harvard.edu/x/" target="_blank" rel="noopener">CS50x →</a> real computer science, free certificate. <b>2027:</b> <a class="go ghost" style="padding:5px 10px;font-size:12px;" href="https://cs50.harvard.edu/web/" target="_blank" rel="noopener">CS50W →</a> websites &amp; apps, then <a class="go ghost" style="padding:5px 10px;font-size:12px;" href="https://cs50.harvard.edu/ai/" target="_blank" rel="noopener">CS50 AI →</a> and <a class="go ghost" style="padding:5px 10px;font-size:12px;" href="https://anthropic.skilljar.com/" target="_blank" rel="noopener">Anthropic Academy →</a> + <a class="go ghost" style="padding:5px 10px;font-size:12px;" href="https://huggingface.co/learn/agents-course/en/unit0/introduction" target="_blank" rel="noopener">HF Agents →</a> — all free, all with certificates.</p>
+    <p>And the secret main quest running under all of it: <b>school maths.</b> Linear algebra, calculus, probability — that's the actual gate on serious AI. Every maths lesson is an hour of AI paid for in advance.</p>
+  </div>
+
+  <p class="foot">You call your own penalties · Field of 1 · Kian.exe</p>
+</div>
+
+<div class="bar">
+  <div class="bar-in">
+    <span>STREAK <b id="streak2">0</b>🔥</span>
+    <span>XP <b id="xp2">0</b></span>
+    <div class="spacer"></div>
+    <span class="savemsg" id="savemsg">progress saves automatically</span>
+  </div>
+</div>
+
+<script>
+(function(){
+  var KEY = 'kian-summer-2026';
+  var state = { done:{}, lastDay:null, streak:0 };
+  var memoryOnly = false;
+
+  var LEVELS = [
+    [0,    'LEVEL 1 · ROOKIE'],
+    [200,  'LEVEL 2 · RANGE RAT'],
+    [450,  'LEVEL 3 · SHIPS THINGS'],
+    [800,  'LEVEL 4 · READS CODE'],
+    [1200, 'LEVEL 5 · BUILDER'],
+    [1700, 'LEVEL 6 · CARD SIGNED']
+  ];
+
+  function todayStr(){
+    var d = new Date();
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  function dayDiff(a,b){
+    return Math.round((new Date(b) - new Date(a)) / 86400000);
+  }
+
+  async function load(){
+    try{
+      if(window.storage && window.storage.get){
+        try{
+          var r = await window.storage.get(KEY);
+          if(r && r.value){ state = JSON.parse(r.value); render(); return; }
+        }catch(e){ /* key doesn't exist yet — fresh start */ }
+        render(); return;
+      }
+    }catch(e){}
+    // normal browser (phone, laptop): use localStorage
+    try{
+      var raw = localStorage.getItem(KEY);
+      if(raw){ state = JSON.parse(raw); }
+    }catch(e){ memoryOnly = true; }
+    render();
+  }
+
+  async function save(){
+    try{
+      if(window.storage && window.storage.set){
+        await window.storage.set(KEY, JSON.stringify(state));
+        document.getElementById('savemsg').textContent = 'saved ✓';
+        return;
+      }
+    }catch(e){}
+    try{
+      localStorage.setItem(KEY, JSON.stringify(state));
+      document.getElementById('savemsg').textContent = 'saved on this phone ✓';
+    }catch(e){
+      document.getElementById('savemsg').textContent = 'saves this session only';
+    }
+  }
+
+  function bumpStreak(){
+    var t = todayStr();
+    if(state.lastDay === t) return;
+    if(state.lastDay){
+      var gap = dayDiff(state.lastDay, t);
+      if(gap === 1){ state.streak += 1; }
+      else if(gap > 1){ state.streak = 1; } // never miss twice — but a gap resets to 1, not 0: today still counts
+    } else {
+      state.streak = 1;
+    }
+    state.lastDay = t;
+  }
+
+  function render(){
+    var xp = 0, ships = 0, gatesDone = 0;
+    document.querySelectorAll('.card').forEach(function(c){
+      var id = c.getAttribute('data-id');
+      var isDone = !!state.done[id];
+      c.classList.toggle('done', isDone);
+      if(isDone){
+        xp += parseInt(c.getAttribute('data-xp')||'0',10);
+        if(id.indexOf('ship')===0) ships++;
+        if(c.getAttribute('data-gate')) gatesDone++;
+      }
+    });
+    document.getElementById('xp').textContent = xp;
+    document.getElementById('xp2').textContent = xp;
+    document.getElementById('ships').textContent = ships;
+    document.getElementById('gates').textContent = gatesDone + '/4';
+    document.getElementById('streak').textContent = state.streak;
+    document.getElementById('streak2').textContent = state.streak;
+
+    var lvl = LEVELS[0], next = null;
+    for(var i=0;i<LEVELS.length;i++){
+      if(xp >= LEVELS[i][0]){ lvl = LEVELS[i]; next = LEVELS[i+1] || null; }
+    }
+    document.getElementById('xplo').textContent = lvl[1];
+    document.getElementById('xphi').textContent = next ? (next[0]-xp)+' XP TO '+next[1].split('·')[1].trim() : 'MAX LEVEL';
+    var lo = lvl[0], hi = next ? next[0] : lvl[0]+1;
+    var pct = Math.min(100, Math.round(((xp-lo)/(hi-lo))*100));
+    document.getElementById('xpfill').style.width = (next?pct:100)+'%';
+  }
+
+  document.querySelectorAll('.card').forEach(function(c){
+    var top = c.querySelector('.card-top');
+    var tick = c.querySelector('.tick');
+
+    top.addEventListener('click', function(e){
+      if(e.target === tick || tick.contains(e.target)) return;
+      c.classList.toggle('open');
+    });
+
+    tick.addEventListener('click', function(){
+      var id = c.getAttribute('data-id');
+      if(state.done[id]){ delete state.done[id]; }
+      else { state.done[id] = todayStr(); bumpStreak(); }
+      render();
+      save();
+    });
+  });
+
+  load();
+})();
+</script>
+</body>
+</html>
